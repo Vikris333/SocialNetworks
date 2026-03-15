@@ -1,0 +1,22 @@
+// 1. Query Seguidores
+MATCH (u:Usuario)<-[:SEGUE]-()
+RETURN u.username AS Usuario, count(*) AS Seguidores
+ORDER BY Seguidores DESC
+LIMIT 10;
+
+
+// 2. Query Postagem
+MATCH (u:Usuario {usuario_id: 24})-[:POSTOU]->(p:Post)
+RETURN p.post_id AS ID, 
+       p.conteudo AS Texto, 
+       p.data_post.day + "/" + p.data_post.month AS Data
+ORDER BY p.data_post DESC;
+
+
+// 3. Query Sugestão de Usuários por Interesse
+MATCH (u:Usuario {usuario_id: 24})-[:POSTOU]->(p:Post)
+RETURN p.post_id AS ID, 
+       p.conteudo AS Texto, 
+       p.data_post.day + "/" + p.data_post.month AS Data
+ORDER BY p.data_post DESC;
+
