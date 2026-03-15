@@ -1,0 +1,53 @@
+// 1. Categorias
+UNWIND ["Tecnologia", "Culinária", "Viagens", "Educação", "Entretenimento"] AS catName
+CREATE (:Categoria {nome: catName});
+
+// 2. Usuários com ID único
+FOREACH (i IN range(1, 50) |
+  CREATE (:Usuario {
+    usuario_id: i,
+    uuid: randomUUID(),
+    nome: "Usuario_" + i,
+    username: "user" + i,
+    criado_em: datetime() - duration({days: toInteger(rand() * 365)})})
+);
+
+// 3. Posts com ID único e data
+FOREACH (i IN range(1, 200) |
+  CREATE (:Post {
+    post_id: i, 
+    conteudo: "Conteúdo do post " + i,
+    data_post: datetime() - duration({days: toInteger(rand() * 30), hours: toInteger(rand() * 24)})
+  })
+);
+
+// 4. POSTOU e PERTENCE_A
+MATCH (p:Post)
+MATCH (u:Usuario) WITH p, u ORDER BY rand()
+WITH p, collect(u)[0] AS autor
+MATCH (c:Categoria) WITH p, autor, c ORDER BY rand()
+WITH p, autor, collect(c)[0] AS categoria
+MERGE (autor)-[:POSTOU {timestamp: p.data_post}]->(p)
+MERGE (p)-[:PERTENCE_A]->(categoria);
+
+// 5. SEGUE
+MATCH (u1:Usuario), (u2:Usuario)
+WHERE u1 <> u2 AND rand() < 0.15
+MERGE (u1)-[:SEGUE {desde: datetime() - duration({days: toInteger(rand() * 100)})}]->(u2);
+
+// 6. CURTIU e COMPARTILHOU
+MATCH (u:Usuario), (p:Post)
+WHERE rand() < 0.12
+MERGE (u)-[:CURTIU {data_curtida: p.data_post + duration({minutes: toInteger(rand() * 500)})}]->(p);
+
+MATCH (u:Usuario), (p:Post)
+WHERE rand() < 0.05
+MERGE (u)-[:COMPARTILHOU {data_compartilhado: p.data_post + duration({hours: toInteger(rand() * 12)})}]->(p);
+
+// 7. COMENTOU
+MATCH (u:Usuario), (p:Post)
+WHERE rand() < 0.08
+CREATE (u)-[:COMENTOU {
+  comentario_id: randomUUID(),
+  data_comentario: p.data_post + duration({minutes: toInteger(rand() * 1440)}),
+  texto: "Opinião sobre o post " + p.post_id}]->(p);
